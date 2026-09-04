@@ -1,11 +1,14 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import BackendLayout from '@/components/BackendLayout.vue'
 import AuthLayout from '@/components/AuthLayout.vue'
+import FrontendLayout from '@/components/FrontendLayout.vue'
+
 
 // 路由配置
 const backendRoutes = [
   {
     path: '/back',
+    redirect: '/back/dashboard',
     component: BackendLayout,
     children: [
       {
@@ -15,10 +18,9 @@ const backendRoutes = [
           title: '数据分析',
           icon: 'PieChart'
         }
-      }
-,
-    {
-        path:'kenwledge',
+      },
+      {
+        path: 'knowledge',
         component: () => import('@/views/knowledge.vue'),
         meta: {
           title: '知识文章',
@@ -26,7 +28,7 @@ const backendRoutes = [
         }
       },
       {
-        path:'consultations',
+        path: 'consultations',
         component: () => import('@/views/consultations.vue'),
         meta: {
           title: '咨询记录',
@@ -34,42 +36,84 @@ const backendRoutes = [
         }
       },
       {
-        path:'emotional',
+        path: 'emotional',
         component: () => import('@/views/emotional.vue'),
         meta: {
           title: '情绪日志',
-          icon: 'user'
+          icon: 'User'
         }
       }
     ]
   },
   {
-    path:'/auth',
+    path: '/auth',
     component: AuthLayout,
     children: [
       {
-        path:'login',
+        path: 'login',
         component: () => import('@/views/login.vue'),
         meta: {
-          title: '登录',
-          icon: 'Login'
+          title: '登录'
         }
       },
       {
-        path:'register',
+        path: 'register',
         component: () => import('@/views/register.vue'),
         meta: {
-          title: '注册',
-          icon: 'User'
+          title: '注册'
         }
       }
     ]
   }
 ]
-// 创建路由实例
+
+const frontendRoutes = [
+  {
+    path: '/',
+    component: FrontendLayout,
+    children: [
+      {
+        path: '',
+        component: () => import('@/views/home.vue')
+      },
+      {
+        path: 'emotion-diary',
+        component: () => import('@/views/emotionDiary.vue')
+      }
+    ]
+  }
+]
+
 const router = createRouter({
-  history: createWebHashHistory(),
-  routes: backendRoutes
+  history: createWebHistory(),
+  routes: [ ...backendRoutes, ...frontendRoutes]
 })
-// 导出路由实例
+
+// 路由前置守卫
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('token')
+  if (token) {
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'))
+    if (userInfo.userType == 2) {
+      if (to.path.startsWith('/back')) {
+        next()
+      } else {
+        next('/back/dashboard')
+      }
+    } else if (userInfo.userType == 1){
+      if (to.path.startsWith('/back') || to.path.startsWith('/auth')) {
+        next('/')
+      } else {
+        next()
+      }
+    }
+  } else {
+    if (to.path.startsWith('/back')) {
+      next('/auth/login')
+    } else {
+      next()
+    }
+  }
+})
+
 export default router
