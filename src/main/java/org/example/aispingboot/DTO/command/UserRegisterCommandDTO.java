@@ -32,7 +32,7 @@ public class UserRegisterCommandDTO {
     private String email;
     @Size(max = 50, message = "昵称长度不能超过50个字符")
     private String nickname;
-    @Pattern(regexp = "^1[3-9]\\d{9}$", message = "手机号格式错误")
+    @Pattern(regexp = "^$|^1[3-9]\\d{9}$", message = "手机号格式错误")
     private String phone;
     @NotBlank(message = "密码不能为空")
     @Size(min = 6, max = 50, message = "密码长度必须在6到50个字符之间")

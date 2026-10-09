@@ -15,13 +15,17 @@ import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 public class PsychologicalSupportService {
+
     @Autowired
     @Qualifier("open-ai")
     private ChatClient chatClient;
@@ -35,56 +39,40 @@ public class PsychologicalSupportService {
     @Autowired
     private ConsultationMessageService consultationMessageService;
 
+    @Transactional
     public StructOutPut.StreamChatSession startSession(Long userId, ConsultationSessionCreateDTO createDTO) {
-        // 创建数据库会话记录
         ConsultationSession consultationSession = consultationSessionService.createSession(userId, createDTO);
-
-        // 将初始用户消息保存到Message表
         consultationMessageService.saveUserMessage(consultationSession.getId(), createDTO.getInitialMessage(), null);
-
-        // 创建会话信息
         String sessionId = "session_" + consultationSession.getId();
         return new StructOutPut.StreamChatSession(
                 sessionId,
                 userId,
                 createDTO.getInitialMessage(),
                 System.currentTimeMillis(),
-                System.currentTimeMillis() + 86400000L, // 24小时
+                System.currentTimeMillis() + 86400000L,
                 1,
                 "ACTIVE"
         );
     }
 
-    public Flux<String> streamPsychologicalChat(String sessionId, String userMessage) {
-        // 创建响应流
+    public Flux<String> streamPsychologicalChat(Long userId, boolean admin, String sessionId, String userMessage) {
         return Flux.create(sink -> {
-            // sink.next("数据1") // 发布数据
-            // sink.complete(); // 完成流
-            // sink.error(exception); // 发布错误
-            Long dbSessionId = extractSessionId(sessionId);
-            if (dbSessionId == null) {
-                sink.error(new RuntimeException("会话ID格式错误"));
-                return;
-            }
-            // 是否为初始消息
+            Long dbSessionId = consultationSessionService.parseSessionId(sessionId);
+            consultationSessionService.requireAccessibleSession(dbSessionId, userId, admin);
             boolean isInitialMessage = false;
-            // 检查是否为初始消息，避免重复保存
             Integer messageCount = consultationMessageService.getMessageCountBySessionId(dbSessionId);
             if (messageCount == 1) {
-               ConsultationMessageResponseDTO lastMessage = consultationMessageService.getLastMessageBySessionId(dbSessionId);
-                if (lastMessage != null && lastMessage.getSenderType() == 1 && userMessage.equals(lastMessage.getContent())) {
+                ConsultationMessageResponseDTO lastMessage = consultationMessageService.getLastMessageBySessionId(dbSessionId);
+                if (lastMessage != null && lastMessage.getSenderType() == 1
+                        && userMessage.equals(lastMessage.getContent())) {
                     isInitialMessage = true;
                 }
             }
             if (!isInitialMessage) {
-                // 保存用户消息到数据库
                 consultationMessageService.saveUserMessage(dbSessionId, userMessage, null);
             }
 
-            // 进行流式对话
-            // 生成对话记忆管理
             String conversationId = "conversation_" + sessionId;
-            // 构建系统提示词
             List<Message> userMessages = new ArrayList<>();
             userMessages.add(new UserMessage(userMessage));
             chatMemory.add(conversationId, userMessages);
@@ -92,43 +80,35 @@ public class PsychologicalSupportService {
                     new SystemMessage(PromptManage.PSYCHOLOGICAL_SUPPORT_SYSTEM_PROMPT)
             ));
 
-            //用于存储AI完成的响应
             StringBuilder fullResponse = new StringBuilder();
+            AtomicReference<Disposable> upstream = new AtomicReference<>();
+            sink.onCancel(() -> {
+                Disposable subscription = upstream.get();
+                if (subscription != null) {
+                    subscription.dispose();
+                }
+            });
 
-            // 使用chatClient发送消息到Open AI
-            chatClient.prompt(prompt)
+            Disposable subscription = chatClient.prompt(prompt)
                     .user(userMessage)
                     .advisors(advisorSpec -> advisorSpec.param(ChatMemory.CONVERSATION_ID, conversationId))
                     .stream()
                     .content()
-                    .doOnNext(Fragment -> {
-                        fullResponse.append(Fragment);
-                        sink.next(Fragment);
+                    .doOnNext(fragment -> {
+                        fullResponse.append(fragment);
+                        sink.next(fragment);
                     })
                     .doOnComplete(() -> {
                         String completeRes = fullResponse.toString();
-                        // 将AI返回的内容保存到数据库
-                        consultationMessageService.saveAimessage(dbSessionId, completeRes, "openai");
-                        // 添加AI回复到chatMemory
+                        consultationMessageService.saveAimessage(dbSessionId, completeRes, "deepseek");
                         List<Message> aiMessages = new ArrayList<>();
                         aiMessages.add(new AssistantMessage(completeRes));
                         chatMemory.add(conversationId, aiMessages);
-
                         sink.complete();
                     })
-                    .doOnError(error -> {
-                        sink.error(error);
-                    })
-                    .subscribe(); // 订阅并启动流
+                    .doOnError(sink::error)
+                    .subscribe();
+            upstream.set(subscription);
         });
-    }
-
-    // 获取参数中的sessionId
-    public Long extractSessionId(String sessionId) {
-        if (sessionId != null && sessionId.startsWith("session_")) {
-            String idStr = sessionId.substring("session_".length());
-            return Long.parseLong(idStr);
-        }
-        return null;
     }
 }

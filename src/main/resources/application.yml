@@ -4,6 +4,11 @@ spring:
     username: root
     password: 123456
 
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+
   ai:
     openai:
       chat:
@@ -26,3 +31,6 @@ jwt:
   header: Authorization  # token头部名称
   token-prefix: "Bearer "  # token前缀
 
+
+file:
+  upload-path: D:/project3/uploads

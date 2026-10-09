@@ -31,8 +31,6 @@ public class UserService {
                 .eq(User::getEmail, commandDTO.getUsername());
         // 调用MP API查询
         User user = userMapper.selectOne(queryWrapper);
-        System.out.println(user);
-
         // 判断用户是否存在
         if (user == null) {
             throw new BusinessException("用户不存在");
@@ -50,13 +48,11 @@ public class UserService {
 
         // 生成JWT token
         String token = JwtTokenUtil.generateToken(user.getId(), user.getUsername(), user.getUserType());
-        System.out.println(token);
         UserLoginResponseDTO.UserDetailResponseDTO userInfo = UserConvert.entityToDetailResponse(user);
         return UserConvert.entityToLoginResponse(token, userInfo);
     }
 
     public UserLoginResponseDTO.UserDetailResponseDTO register(UserRegisterCommandDTO commandDTO) {
-        System.out.println(JSONUtil.parseObj(commandDTO));
         // 验证密码是否一致
         if (!commandDTO.getPassword().equals(commandDTO.getConfirmPassword())) {
             throw new BusinessException("两次输入密码不一致");
@@ -76,10 +72,8 @@ public class UserService {
             throw new BusinessException("邮箱已存在");
         }
 
-        // 用户类型
-        if (!UserType.isValidCode(commandDTO.getUserType())) {
-            throw new BusinessException("无效的用户类型");
-        }
+        // 注册入口只允许创建普通用户，管理员账号由初始化脚本创建
+        commandDTO.setUserType(UserType.USER.getCode());
 
         // 创建用户
         String password = commandDTO.getPassword().trim();
