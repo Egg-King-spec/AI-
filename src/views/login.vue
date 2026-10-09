@@ -33,11 +33,14 @@
 </template>
 
 <script setup>
+import { login } from '@/api/admin'
 import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 
 const ruleFormRef=ref()
+const router = useRouter()
 
-const formData = ref({
+const formData = reactive({
     username: '',
     password: ''
 })
@@ -51,12 +54,21 @@ const rules = reactive({
     ]
 })
 
-const submitForm = (formEl) => {
+const submitForm = async (formEl) => {
     if(!formEl) return
     formEl.validate((valid,fields) => {
         if (valid) {
-            console.log(fields)
-            // 登录逻辑
+            console.log(formData,'formData')
+           login(formData).then(data => {
+            // 判断token是否存在
+            if(!data.token){
+                return console.error('登录失败')
+            }
+            // 登录成功，保存token和用户信息
+            localStorage.setItem('token',data.token)
+            localStorage.setItem('userInfo',JSON.stringify(data.userInfo))
+            router.push('/back/dashboard')
+           })
         } 
     })
 }

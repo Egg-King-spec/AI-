@@ -3,7 +3,7 @@
     <div class="header-section">
         <div class="header-content">
             <el-image :src="iconUrl" style="width: 60px;height: 60px"></el-image>
-            <h1>情绪日志</h1>
+            <h1>心理知识库</h1>
         </div>
     </div>
     <div class="content">
@@ -65,6 +65,7 @@
     import { ref, reactive, onMounted } from 'vue'
     import { getKnowledgeList } from '@/api/frontend'
     import { useRouter } from 'vue-router'
+    import { fileBaseUrl } from '@/config/index.js'
 
     const router = useRouter()
     
@@ -96,7 +97,7 @@
     }
     // 获取封面图片
     const getImage = (url) => {
-        return url ? 'http://159.75.169.224:1235' + url : 'https://file.itndedu.com/psychology_ai.png'
+        return url ? fileBaseUrl + url : 'https://file.itndedu.com/psychology_ai.png'
     }
 
     const handleChange = (page) => {

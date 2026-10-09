@@ -1,1 +1,1 @@
-export const fileBaseUrl = 'http://159.75.169.224:1235'
+export const fileBaseUrl = import.meta.env.VITE_FILE_BASE_URL || 'http://localhost:1236'

@@ -1,37 +1,29 @@
 import service from '@/utils/request'
 
-export const register = (data) => {
-    return service.post('/user/add', data)
+export function startSession(data) {
+  return service.post('/psychological-chat/session/start', data)
 }
 
-export const startSession = (data) => {
-    return service.post('/psychological-chat/session/start', data)
+export function getSessionList(params) {
+  return service.get('/psychological-chat/sessions', { params })
 }
 
-export const getSessionList = (params) => {
-    return service.get('/psychological-chat/sessions', { params })
+export function getSessionDetail(sessionId) {
+  return service.get('/psychological-chat/session/' + sessionId)
 }
 
-export const deleteSession = (sessionId) => {
-    return service.delete(`/psychological-chat/sessions/${sessionId}`)
+export function deleteSession(sessionId) {
+  return service.delete('/psychological-chat/session/' + sessionId)
 }
 
-export const getSessionDetail = (sessionId) => {
-    return service.get(`/psychological-chat/sessions/${sessionId}/messages`)
+export function getSessionEmotion(sessionId) {
+  return service.get('/psychological-chat/session/' + sessionId + '/emotion')
 }
 
-export const getSessionEmotion = (sessionId) => {
-    return service.get(`/psychological-chat/session/${sessionId}/emotion`)
+export function getKnowledgeList(params) {
+  return service.get('/knowledge/article/page', { params })
 }
 
-export const addEmotionDiary = (data) => {
-    return service.post('/emotion-diary', data)
-}
-
-export const getKnowledgeList = (params) => {
-    return service.get('/knowledge/article/page', { params })
-}
-
-export const getKnowledgeDetail = (articleId) => {
-    return service.get(`/knowledge/article/${articleId}`)
+export function getKnowledgeDetail(id) {
+  return service.get('/knowledge/article/' + id)
 }

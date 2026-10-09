@@ -45,3 +45,19 @@ export function changeArticleStatus(id, data) {
 export function deleteArticle(id) {
     return service.delete(`/knowledge/article/${id}`)
 }
+
+export function dashboardOverview() {
+  return service.get('/admin/dashboard/overview')
+}
+
+export function consultationPage(params) {
+  return service.get('/admin/consultations', { params })
+}
+
+export function emotionDiaryPage(params) {
+  return service.get('/admin/emotion-diaries', { params })
+}
+
+export function register(data) {
+  return service.post('/user/add', data)
+}

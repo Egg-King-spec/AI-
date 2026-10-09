@@ -14,7 +14,7 @@
         </div>
       </div>
         <!-- 遍历路由配置，动态生成菜单项 -->
-        <el-menu-item @click="selectMenu" v-for="item in router.options.routes[0].children" :key="item.path" :index="item.path">
+        <el-menu-item @click="selectMenu" v-for="item in menus" :key="item.path" :index="item.path">
           <el-icon><component :is="item.meta.icon" /></el-icon>
           <span>{{item.meta.title}}</span>
         </el-menu-item>
@@ -33,12 +33,13 @@ const router = useRouter()
 const iconUrl=new URL('@/assets/images/机器人.png',import.meta.url).href
 
 const isCollapse = computed(() => useAdminStore().isCollapse)
+const menus = computed(() => router.options.routes.find(route => route.path === '/back')?.children || [])
 
 console.log(router,'router')
 // 点击菜单时跳转路由
 const selectMenu = (key) => {
   console.log(key)
-  const currentRoute = router.options.routes[0]
+  const currentRoute = router.options.routes.find(route => route.path === '/back')
   router.push(`${currentRoute.path}/${key.index}`)
 }
 

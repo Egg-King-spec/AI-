@@ -104,10 +104,9 @@ watch(() => props.article, (newVal) => {
     if (newVal) {
         nextTick(() => {
             Object.assign(formData, newVal)
-            // 使用现有ID
+            formData.tagArray = newVal.tags ? newVal.tags.split(',').filter(Boolean) : []
             businessId.value = newVal.id
-            // 封面Url
-            imgUrl.value = fileBaseUrl + newVal.coverImage
+            imgUrl.value = newVal.coverImage ? fileBaseUrl + newVal.coverImage : ''
         })
     }
 })
@@ -132,6 +131,7 @@ const formData = reactive({
     "categoryId": "",
     "summary": "",
     "tags": "",
+    "tagArray": [],
     "id": ""
 })
 
@@ -161,7 +161,7 @@ const beforeUpload = (file) => {
     // 针对上传的文件进行校验
     console.log(file)
     const isImage = file.type.startsWith('image/')
-    const isLt5M = file.size / 1014 / 1014 < 5
+    const isLt5M = file.size / 1024 / 1024 < 5
     if (!isImage) {
         ElMessage.error('上传封面图片，请选择图片文件')
         return false
@@ -214,34 +214,28 @@ const btnPreview = ref(false)
 const formRef = ref()
 const loading = ref(false)
 const handleSubmit = () => {
-    formRef.value.validate((valid, fields) => {
-        if (valid) {
-            loading.value = true
-        }
-        console.log(formData, 'FormData')
+    formRef.value.validate(async (valid) => {
+        if (!valid) return
+        loading.value = true
         const submitData = {
             ...formData,
-            tags: formData.tagArray.join(',')
+            tags: (formData.tagArray || []).join(',')
         }
         delete submitData.tagArray
-        
-        if (!isEdit.value) {
-            submitData.id = businessId.value
-            createArticle(submitData).then(res => {
-                loading.value = false
-                emit('success')
-            })
-        } else {
-            updateArticle(props.article.id, submitData).then(res => {
-                loading.value = false
-                emit('success')
-            })
+        try {
+            if (!isEdit.value) {
+                submitData.id = businessId.value
+                await createArticle(submitData)
+            } else {
+                await updateArticle(props.article.id, submitData)
+            }
+            emit('success')
+        } finally {
+            loading.value = false
         }
-
-        
-
     })
 }
+
 </script>
 <style lang="scss" scoped>
 .cover-placeholder {

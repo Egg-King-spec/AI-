@@ -1,65 +1,15 @@
 <template>
-    <div class="home-container">
-        <div class="content">
-            <div class="text">
-                <h2 class="title">
-                    一次温暖的对话<br/>
-                    <span class="highlight-text">化孤独为慰藉</span>
-                </h2>
-                <p class="description">每个深夜，每个焦虑的时刻，我们都在这里。不必独自承受，让心与心的连接温暖您的每一天</p>
-                <div class="hero-actions">
-                    <el-button size="large">开始倾诉，获得陪伴</el-button>
-                    <el-button size="large" style="border-color: #fff" color="transparent">记录心情，释放情感</el-button>
-                </div>
-            </div>
-            <div class="robot">
-                <el-image style="width: 150px; height: 150px" :src="iconUrl" alt="机器人" class="robot-image" />
-            </div>
-        </div>
+  <div class="home-page">
+    <h1>心理健康 AI 助手</h1>
+    <p>从知识库开始了解情绪管理，或进入对话页面记录今天的感受。</p>
+    <div class="actions">
+      <el-button type="primary" @click="$router.push('/knowledge')">心理知识库</el-button>
+      <el-button @click="$router.push('/back/dashboard')">进入管理后台</el-button>
     </div>
+  </div>
 </template>
-<script setup>
-const iconUrl = new URL('../assets/images/robot-fill.png', import.meta.url).href
-</script>
-<style scoped lang="scss">
-.home-container {
-    background: linear-gradient(90deg, rgb(74, 156, 140) 0%, rgb(61, 138, 122) 100%) rgba(74, 156, 140, 0.95);
-    color: white;
-    padding: 5rem 0;
-    height: calc(100vh - 285px);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    .content {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 30px;
-        .text {
-            width: 500px;
-            .title {
-                font-size: 45px;
-                font-weight: bold;
-                margin-bottom: 15px;
-                .highlight-text {
-                    color: #ffd700;
-                }
-            }
-            .hero-actions {
-                margin-top: 30px;
-            }
-        }
-        .robot {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 260px;
-            height: 260px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1),inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        }
-    }
-}
+
+<style scoped>
+.home-page { max-width: 920px; margin: 0 auto; padding: 96px 24px; }
+.actions { display: flex; gap: 12px; margin-top: 24px; }
 </style>

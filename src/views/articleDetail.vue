@@ -46,6 +46,7 @@
 </template>
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { getKnowledgeDetail } from '@/api/frontend'
 import { dayjs } from 'element-plus'
 import { Avatar } from '@element-plus/icons-vue'
@@ -71,8 +72,7 @@ const formatContent = (content) => {
 }
 
 onMounted(() => {
-    console.log(props)
-    getKnowledgeDetail(props.id).then(res => {
+    getKnowledgeDetail(route.params.id).then(res => {
         articleDetail.value = res
     })
 })
